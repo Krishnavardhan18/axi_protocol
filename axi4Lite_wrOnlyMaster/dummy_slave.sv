@@ -1,11 +1,27 @@
 `timescale 1ns/1ps
 
-module dummy_slave (
+module dummy_slave #(
+    parameter ADDR_WIDTH = 32, 
+    parameter DATA_WIDTH = 32, 
+    parameter STRB_WIDTH = DATA_WIDTH/8)(
     input  logic clk,
     input  logic rst,
     input  logic start,
     output logic done,
-    axi_signals_if.slave axi
+
+    input logic [ADDR_WIDTH-1:0]  AWADDR,
+    input logic                   AWVALID,
+    input logic [DATA_WIDTH-1:0]  WDATA,
+    input logic [STRB_WIDTH-1:0]  WSTRB,
+    input logic                   WVALID,
+    input logic                   BREADY,
+
+
+    output logic                   AWREADY,
+    output logic                   WREADY,
+    output logic                   BVALID,
+    output logic [1:0]             BRESP
+    
 );
 
     typedef enum logic [2:0]{
@@ -33,12 +49,12 @@ module dummy_slave (
             end
 
             SEND_AR : begin
-                if(axi.AWVALID) nxt_state = SEND_WR;
+                if(AWVALID) nxt_state = SEND_WR;
                 else nxt_state = SEND_AR;
             end
 
             SEND_WR : begin
-                if(axi.WVALID) nxt_state = SEND_BVALID;
+                if(WVALID) nxt_state = SEND_BVALID;
                 else nxt_state = SEND_WR;
             end
 
@@ -56,29 +72,29 @@ module dummy_slave (
 //this always block does slave function
     always_ff @(posedge clk or negedge rst) begin
         if(!rst) begin
-            axi.AWREADY  <= 0;
-            axi.WREADY   <= 0;
-            axi.BVALID   <= 0;
-            axi.BRESP    <= 0; 
+            AWREADY  <= 0;
+            WREADY   <= 0;
+            BVALID   <= 0;
+            BRESP    <= 0; 
         end
         else begin
-            axi.AWREADY <= 0;
-            axi.WREADY <= 0;
-            axi.BVALID  <= 0;
-            axi.BRESP   <= 2'b00;
+            AWREADY <= 0;
+            WREADY <= 0;
+            BVALID  <= 0;
+            BRESP   <= 2'b00;
 
             case (cur_state)
                 SEND_AR: begin
-                    axi.AWREADY <= 1;
+                    AWREADY <= 1;
                 end
 
                 SEND_WR: begin
-                    axi.WREADY  <= 1;
+                    WREADY  <= 1;
                 end
 
                 SEND_BVALID: begin
-                    axi.BVALID  <= 1;
-                    axi.BRESP   <= 2'b00;
+                    BVALID  <= 1;
+                    BRESP   <= 2'b00;
                 end
             endcase
         end

@@ -1,5 +1,3 @@
-# Makefile for AXI4 Lite Write-Only Master simulation
-
 TOP_MODULE = axi_write_tb
 SRC = axi_signals_if.sv dummy_slave.sv master_fsm.sv axi_write_tb.sv
 OUT = sim.out
@@ -13,7 +11,7 @@ compile:
 run: compile
 	vvp $(OUT)
 
-wave:
+waves:
 	gtkwave $(VCD) &
 
 clean:

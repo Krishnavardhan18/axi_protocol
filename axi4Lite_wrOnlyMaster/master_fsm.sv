@@ -1,11 +1,26 @@
 `timescale 1ns/1ps
 
-module master_fsm (
+module master_fsm #(
+    parameter ADDR_WIDTH = 32, 
+    parameter DATA_WIDTH = 32, 
+    parameter STRB_WIDTH = DATA_WIDTH/8)(
     input  logic clk,
     input  logic rst,
     input  logic start,
     output logic done,
-    axi_signals_if.master axi
+    output logic [ADDR_WIDTH-1:0]  AWADDR,
+    output logic                   AWVALID,
+    output logic [DATA_WIDTH-1:0]  WDATA,
+    output logic [STRB_WIDTH-1:0]  WSTRB,
+    output logic                   WVALID,
+    output logic                   BREADY,
+
+
+    input logic                   AWREADY,
+    input logic                   WREADY,
+    input logic                   BVALID,
+    input logic [1:0]             BRESP
+    
 );
 
     typedef enum logic [2:0]{
@@ -33,15 +48,15 @@ module master_fsm (
                 else nxt_state = IDLE;
             end
             SEND_AW : begin
-                if(axi.AWREADY) nxt_state = SEND_W;
+                if(AWREADY) nxt_state = SEND_W;
                 else nxt_state = SEND_AW;
             end
             SEND_W : begin
-                if(axi.WREADY) nxt_state = WAIT_B;
+                if(WREADY) nxt_state = WAIT_B;
                 else nxt_state = SEND_W;
             end
             WAIT_B : begin
-                if(axi.BVALID) nxt_state = DONE;
+                if(BVALID) nxt_state = DONE;
                 else nxt_state = WAIT_B;
             end
             DONE : begin
@@ -55,32 +70,32 @@ module master_fsm (
 // this always comb block tells what operation has to be performed when it is in the particular state
     always_ff @( posedge clk or negedge rst ) begin 
         if(!rst) begin
-            axi.AWADDR  <= 0;
-            axi.AWVALID <= 0;
-            axi.WDATA   <= 0;
-            axi.WSTRB   <= 0;
-            axi.WVALID  <= 0;
-            axi.BREADY  <= 0;    
+            AWADDR  <= 0;
+            AWVALID <= 0;
+            WDATA   <= 0;
+            WSTRB   <= 0;
+            WVALID  <= 0;
+            BREADY  <= 0;    
         end
         else begin
-            axi.AWVALID <= 0;
-            axi.WVALID  <= 0;
-            axi.BREADY  <= 0;
+            AWVALID <= 0;
+            WVALID  <= 0;
+            BREADY  <= 0;
 
             case (cur_state)
                 SEND_AW: begin
-                    axi.AWVALID <= 1;
-                    axi.AWADDR  <= 32'h0000_0000;
+                    AWVALID <= 1;
+                    AWADDR  <= 32'h0000_0000;
                 end
 
                 SEND_W: begin
-                    axi.WVALID  <= 1;
-                    axi.WDATA   <= 32'hDEADFEED;
-                    axi.WSTRB   <= 4'b1111;
+                    WVALID  <= 1;
+                    WDATA   <= 32'hDEADFEED;
+                    WSTRB   <= 4'b1111;
                 end
 
                 WAIT_B: begin
-                    axi.BREADY  <= 1;
+                    BREADY  <= 1;
                 end
                 default;
             endcase

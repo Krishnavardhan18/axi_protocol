@@ -1,3 +1,6 @@
+/*This file is not used in any of the design files for this project as I am using iverilog to support and these features aren't supported by the tool*/
+/*However, for future improvements, this file is not deleted*/
+
 interface axi_signals_if #(
     parameter ADDR_WIDTH = 32, 
     parameter DATA_WIDTH = 32, 
