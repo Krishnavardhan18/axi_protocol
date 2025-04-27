@@ -37,7 +37,7 @@ module tb_wrSlave;
 
     initial begin
         clk = 0;
-        forever #5 clk = ~clk; // 100MHz clock
+        forever #5 clk = ~clk; //100MHz clock
     end
 
     initial begin
@@ -71,10 +71,30 @@ module tb_wrSlave;
         BREADY = 1;
         #10;
         BREADY = 0;
-        //done
         #50;
         $display("Test completed");
         $finish;
     end
+
+/*FIXME: KRISHNA: Assertion Property to check AWVALID deassertion followed by BVALID assertion*/
+    property p_awvalid_bvalid_handshake;
+        @(posedge clk)
+        disable iff (rst)
+        AWVALID == 0 |-> (BVALID == 1);
+    endproperty
+
+    assert property (p_awvalid_bvalid_handshake)
+        else $fatal("AWVALID not properly followed by BVALID.");
+        
+/*FIXME: KRISHNA: This covergroup checks: "Was the write address phase ever started?"*/
+    covergroup cg_awvalid_assertion @(posedge clk);
+        AWVALID : coverpoint AWVALID;
+    endgroup
+
+    covergroup cg_bvalid_assertion @(posedge clk);
+        BVALID : coverpoint BVALID;
+    endgroup
+    cg_awvalid_assertion cg_awvalid = new;
+    cg_bvalid_assertion cg_bvalid = new;
 
 endmodule
